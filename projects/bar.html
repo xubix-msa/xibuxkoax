@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Parallelogram Resizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="max-w-4xl w-full p-6 bg-white shadow-xl rounded-xl">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Parallelogram Resizer</h1>
+
+    <!-- Resize Controls -->
+    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 p-4 bg-gray-50 rounded-lg mb-8">
+        <label for="resizeAmount" class="text-lg font-medium text-gray-700 whitespace-nowrap">
+            Resize Width By (px):
+        </label>
+        <input type="number" id="resizeAmount" value="100" min="-200" max="500"
+               class="p-2 border border-gray-300 rounded-lg w-full text-center md:w-32 focus:ring-blue-500 focus:border-blue-500" />
+        <button onclick="resizeParallelogram()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 w-full md:w-auto">
+            Apply Resize
+        </button>
+    </div>
+
+    <div id="svgContainer" class="flex justify-center p-4 border border-gray-200 rounded-lg bg-white overflow-x-auto">
+        <!-- The Original SVG code provided by the user -->
+        <svg id="parallelogramSVG" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+             width="528.88638" height="83.80404" viewBox="0,0,528.88638,83.80404"
+             data-original-width="528.88638" data-original-viewbox-width="528.88638"
+             style="max-width: 100%; height: auto;">
+            <defs>
+                <linearGradient x1="318.97112" y1="139.95" x2="318.97112" y2="215.45811" gradientUnits="userSpaceOnUse" id="color-1"><stop offset="0" stop-color="#ff9494"/><stop offset="1" stop-color="#ff96c5"/></linearGradient>
+                <linearGradient x1="318.97112" y1="145.99596" x2="318.97112" y2="209.41215" gradientUnits="userSpaceOnUse" id="color-2"><stop offset="0" stop-color="#fe0000"/><stop offset="1" stop-color="#ff0088"/></linearGradient>
+                <linearGradient x1="339.09569" y1="177.4581" x2="339.09569" y2="139.70403" gradientUnits="userSpaceOnUse" id="color-3"><stop offset="0" stop-color="#ffffff" stop-opacity="0.32157"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+                <linearGradient x1="338.66942" y1="138.49593" x2="338.66945" y2="153.49599" gradientUnits="userSpaceOnUse" id="color-4"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+                <linearGradient x1="318.97109" y1="139.95" x2="318.97109" y2="215.45811" gradientUnits="userSpaceOnUse" id="color-5"><stop offset="0" stop-color="#a81b1b"/><stop offset="1" stop-color="#9e2045"/></linearGradient>
+            </defs>
+            <g transform="translate(-54.52793,-137.7)">
+                <g data-paper-data="{&quot;isPaintingLayer&quot;:true}" fill-rule="nonzero" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10" stroke-dasharray="" stroke-dashoffset="0" style="mix-blend-mode: normal">
+                    <!-- Path 1: Main background fill (Inner) -->
+                    <path id="path1" d="M502.47428,215.45811h-442.51431l75.50811,-75.50811h442.51431l-75.50808,75.50808z" fill="url(#color-1)" stroke="none" stroke-width="0"/>
+                    
+                    <!-- Path 2: Inner gradient fill -->
+                    <path id="path2" d="M500.42831,209.41215h-426.33048l63.41619,-63.41619h426.33045l-63.41616,63.41616z" fill="url(#color-2)" stroke="none" stroke-width="0"/>
+                    
+                    <!-- Path 3: Outer shadow/outline -->
+                    <path id="path3" d="M504.53198,221.50404h-442.51431l75.50811,-75.50811h442.51431l-75.50808,75.50808z" fill-opacity="0.32157" fill="#ff0000" stroke="none" stroke-width="0"/>
+                    
+                    <!-- Path 4: Top highlight 1 -->
+                    <path id="path4" d="M577.97069,139.70406l-38.625,37.75404h-441l37.5,-37.75404z" fill="url(#color-3)" stroke="none" stroke-width="0"/>
+                    
+                    <!-- Path 5: Top highlight 2 -->
+                    <path id="path5" d="M124.22537,153.49593l11.14287,-14.99997h443.031l-13.28571,15z" fill="url(#color-4)" stroke="none" stroke-width="0"/>
+                    
+                    <!-- Path 6: Outline stroke -->
+                    <path id="path6" d="M59.95991,215.45811l75.50811,-75.50811h442.51431l-75.50808,75.50808z" fill="none" stroke="url(#color-5)" stroke-width="4.5"/>
+                </g>
+            </g>
+        </svg>
+    </div>
+</div>
+
+<script>
+    // Initial path data parameters for horizontal segments (M-X and H-length)
+    // We only need to track the numbers that change when the width is extended.
+    const initialPaths = {
+        // [M-X, H-length (relative)]
+        'path1': { startX: 502.47428, hLength: 442.51431 },
+        'path2': { startX: 500.42831, hLength: 426.33048 },
+        'path3': { startX: 504.53198, hLength: 442.51431 },
+        // path4 is slightly different structure: [M-X, second H-length (negative)]
+        'path4': { startX: 577.97069, hLength: -441 },
+        // path5 is also different: [H-length (positive)]
+        'path5': { hLength: 443.031 }, 
+        // path6 is similar to 1, 2, 3 but starts on the left: [H-length (positive)]
+        'path6': { hLength: 442.51431 },
+    };
+
+    const svgElement = document.getElementById('parallelogramSVG');
+    const originalSvgWidth = parseFloat(svgElement.getAttribute('data-original-width'));
+    const originalViewBoxWidth = parseFloat(svgElement.getAttribute('data-original-viewbox-width'));
+
+    /**
+     * Resizes the parallelogram horizontally by adjusting the right-side coordinates.
+     * @param {number} deltaX - The change in width (positive to extend right, negative to shrink).
+     */
+    function resizeParallelogram() {
+        const deltaX = parseFloat(document.getElementById('resizeAmount').value) || 0;
+        
+        // 1. Update SVG width and viewBox
+        const newSvgWidth = originalSvgWidth + deltaX;
+        const newViewBoxWidth = originalViewBoxWidth + deltaX;
+        
+        svgElement.setAttribute('width', newSvgWidth);
+        svgElement.setAttribute('viewBox', `0,0,${newViewBoxWidth},83.80404`);
+        
+        // 2. Iterate and update key paths
+        for (const id in initialPaths) {
+            const pathData = initialPaths[id];
+            const pathElement = document.getElementById(id);
+            let newD = '';
+
+            if (!pathElement) continue;
+
+            // Get the original d attribute for replacement logic
+            const originalD = pathElement.getAttribute('data-original-d') || pathElement.getAttribute('d');
+            pathElement.setAttribute('data-original-d', originalD); // Store original for future resets
+
+            if (id === 'path1' || id === 'path2' || id === 'path3') {
+                // These paths are defined by: M(Rx),Y h-Lx l(slant) h+Lx l(slant)z
+                // We update the starting X (Rx) and both horizontal lengths (Lx)
+                const newStartX = (pathData.startX + deltaX).toFixed(5);
+                const newHLength = (pathData.hLength + deltaX).toFixed(5);
+                
+                // Construct the new path string using template literals for clarity
+                const parts = originalD.match(/M([\d\.]+),([\d\.]+)h-([\d\.]+)l([\d\.]+),([\-\d\.]+)h([\d\.]+)l([\-\d\.]+),([\d\.]+)z/);
+                if (parts) {
+                    newD = `M${newStartX},${parts[2]}h-${newHLength}l${parts[4]},${parts[5]}h${newHLength}l${parts[7]},${parts[8]}z`;
+                }
+            } else if (id === 'path4') {
+                // Path 4: M(Rx),Y l(slant) h-Lx l(slant)z
+                // We update starting X (Rx) and the negative horizontal length (-Lx)
+                const newStartX = (pathData.startX + deltaX).toFixed(5);
+                const newHLength = (pathData.hLength - deltaX).toFixed(5); // Subtract deltaX from negative length
+                
+                const parts = originalD.match(/M([\d\.]+),([\d\.]+)l([\-\d\.]+),([\d\.]+)h([\-\d\.]+)l([\d\.]+),([\-\d\.]+)z/);
+                if (parts) {
+                    newD = `M${newStartX},${parts[2]}l${parts[3]},${parts[4]}h${newHLength}l${parts[6]},${parts[7]}z`;
+                }
+
+            } else if (id === 'path5' || id === 'path6') {
+                // Paths 5 and 6 start on the left and define length with a single positive h command.
+                // We only update the positive horizontal length (Lx)
+                const newHLength = (pathData.hLength + deltaX).toFixed(5);
+
+                // Use simple string replacement for the h command value
+                // Note: This relies on the h command being the third coordinate segment in the string.
+                const segments = originalD.split(' ');
+                // Example for path 6: d="M59.95991,215.45811l75.50811,-75.50811h442.51431l-75.50808,75.50808z"
+                // The 'h' command is the third path instruction.
+                const hSegmentIndex = originalD.indexOf('h');
+                if (hSegmentIndex !== -1) {
+                    // Find the value right after 'h'
+                    const hValueMatch = originalD.substring(hSegmentIndex).match(/h([\d\.]+)/);
+                    if (hValueMatch) {
+                        newD = originalD.replace(hValueMatch[0], `h${newHLength}`);
+                    }
+                }
+            }
+            
+            if (newD) {
+                pathElement.setAttribute('d', newD);
+            }
+        }
+    }
+
+    // Call once to ensure initial setup is correct
+    resizeParallelogram();
+
+</script>
+
+</body>
+</html>
